@@ -4,8 +4,8 @@
  * @brief       RcCar_Config
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2022/10/22
+ * @version     1.1.0
+ * @date        2022/12/28
  * 
  * @copyright   (C) 2022 Motoyuki Endo
  */
@@ -33,8 +33,8 @@ const AckermannDriveConfig Config =
     } ,
 //  throttle
     {
-//    | wheelbase | diameter | minRpm | maxRpm |
-        0.235 ,     0.09 ,     -620 ,   620 ,
+//    | wheelbase | diameter | minRpm | maxRpm | forwardGain | reverseGain |
+        0.235 ,     0.09 ,     -620 ,   620 ,    1.0 ,         2.0 ,
 //      servo
         {
             //  portConfig

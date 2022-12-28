@@ -4,8 +4,8 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2022/10/22
+ * @version     1.1.0
+ * @date        2022/12/28
  * 
  * @copyright   (C) 2022 Motoyuki Endo
  */
@@ -44,6 +44,8 @@ struct ThrottleConfig_Tag
 	float diameter;
 	int32_t minRpm;
 	int32_t maxRpm;
+	float forwardGain;
+	float reverseGain;
 	ServoConfig servo;
 };
 typedef struct ThrottleConfig_Tag					ThrottleConfig;
@@ -76,6 +78,8 @@ private:
 	float _radius;
 	int32_t _minRpm;
 	int32_t _maxRpm;
+	float _forwardGain;
+	float _reverseGain;
 
 public:
 	ServoCtrl steering;

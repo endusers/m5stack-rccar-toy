@@ -4,8 +4,8 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2022/10/22
+ * @version     1.1.0
+ * @date        2022/12/28
  * 
  * @copyright   (C) 2022 Motoyuki Endo
  */
@@ -51,6 +51,8 @@ AckermannDrive::AckermannDrive( AckermannDriveConfig i_config )
 	_radius = _config.throttle.diameter / 2;
 	_minRpm = _config.throttle.minRpm;
 	_maxRpm = _config.throttle.maxRpm;
+	_forwardGain = _config.throttle.forwardGain;
+	_reverseGain = _config.throttle.reverseGain;
 }
 
 
@@ -133,10 +135,20 @@ void AckermannDrive::SetSteering( float i_angle )
  */
 void AckermannDrive::SetSpeed( float i_speed )
 {
+	float speed;
 	float rpm;
 	float position;
 
-	rpm = i_speed / ( 2 * M_PI * _radius ) * 60;
+	if( i_speed < 0.0 )
+	{
+		speed = i_speed * _reverseGain;
+	}
+	else
+	{
+		speed = i_speed * _forwardGain;
+	}
+
+	rpm = speed / ( 2 * M_PI * _radius ) * 60;
 
 	if( rpm < _minRpm )
 	{
