@@ -5,9 +5,9 @@
  * @note        なし
  * 
  * @version     1.1.0
- * @date        2022/12/28
+ * @date        2023/01/15
  * 
- * @copyright   (C) 2022 Motoyuki Endo
+ * @copyright   (C) 2022-2023 Motoyuki Endo
  */
 #include "RcCar_Config.h"
 
@@ -34,7 +34,7 @@ const AckermannDriveConfig Config =
 //  throttle
     {
 //    | wheelbase | diameter | minRpm | maxRpm | forwardGain | reverseGain |
-        0.235 ,     0.09 ,     -620 ,   620 ,    1.0 ,         2.0 ,
+        0.235 ,     0.09 ,     -450 ,   450 ,    1.0 ,         2.0 ,
 //      servo
         {
             //  portConfig
