@@ -4,10 +4,10 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2022/12/20
+ * @version     1.1.0
+ * @date        2022/03/22
  * 
- * @copyright   (C) 2022 Motoyuki Endo
+ * @copyright   (C) 2022-2023 Motoyuki Endo
  */
 #include "RcCar.h"
 
@@ -110,9 +110,24 @@ RcCar::RcCar( void )
 	_failJoyCtlCnt = 0;
 
 	_imuInfPubCycle = 0;
+	_imuMsg.header.stamp.sec = 0;
+	_imuMsg.header.stamp.nanosec = 0;
+	_imuMsg.header.frame_id.capacity = strlen("imu_link");
+	_imuMsg.header.frame_id.data = (char *)"imu_link";
+	_imuMsg.header.frame_id.size = strlen("imu_link");
+	memset( &_imuMsg.orientation_covariance[0], 0, sizeof(_imuMsg.orientation_covariance) );
+#if RCCAR_IMUINF_ORIENTATION_TYPE == RCCAR_IMUINF_ORIENTATION_NOTSUPPORT
+	_imuMsg.orientation_covariance[0] = -1.0;
+#endif
+	_imuMsg.orientation.x = 0.0;
+	_imuMsg.orientation.y = 0.0;
+	_imuMsg.orientation.z = 0.0;
+	_imuMsg.orientation.w = 0.0;
+	memset( &_imuMsg.linear_acceleration_covariance[0], 0, sizeof(_imuMsg.linear_acceleration_covariance) );
 	_imuMsg.linear_acceleration.x = 0.0;
 	_imuMsg.linear_acceleration.y = 0.0;
 	_imuMsg.linear_acceleration.z = 0.0;
+	memset( &_imuMsg.angular_velocity_covariance[0], 0, sizeof(_imuMsg.angular_velocity_covariance) );
 	_imuMsg.angular_velocity.x = 0.0;
 	_imuMsg.angular_velocity.y = 0.0;
 	_imuMsg.angular_velocity.z = 0.0;
@@ -186,6 +201,9 @@ void RcCar::Init( void )
 	delay(50);
 
 	M5.IMU.Init();
+
+	// M5.IMU.SetGyroFsr( M5.IMU.GFS_500DPS ); 
+	// M5.IMU.SetAccelFsr( M5.IMU.AFS_4G );
 
 	_rccar.Init();
 
@@ -548,6 +566,7 @@ void RcCar::RosMgrCtrlCycle( void )
 #if ROS_AGENT_COMMODE == ROS_AGENT_COMMODE_UDP
 				if( WiFi.status() == WL_CONNECTED )
 				{
+					configTime( 0, 0, "ntp.nict.jp" );
 					_rosConState = ROS_CNST_WIFI_CONNECTED;
 				}
 				else
@@ -666,12 +685,17 @@ void RcCar::PublishImuInfo( void )
 {
 	rcl_ret_t ret;
 	uint32_t getTime;
-	float accX = 0.0;
-	float accY = 0.0;
-	float accZ = 0.0;
-	float gyroX = 0.0;
-	float gyroY = 0.0;
-	float gyroZ = 0.0;
+	float accX;
+	float accY;
+	float accZ;
+	float gyroX;
+	float gyroY;
+	float gyroZ;
+	float pitch;
+	float roll;
+	float yaw;
+	float quat[4];
+	time_t now;
 
 	getTime = (uint32_t)millis();
 
@@ -679,7 +703,34 @@ void RcCar::PublishImuInfo( void )
 	{
 		M5.IMU.getGyroData( &gyroX, &gyroY, &gyroZ );
 		M5.IMU.getAccelData( &accX, &accY, &accZ );
+		M5.IMU.getAhrsData( &pitch, &roll, &yaw );	// Madgwick Filter
 
+#if RCCAR_IMUINF_ORIENTATION_TYPE == RCCAR_IMUINF_ORIENTATION_SUPPORT
+		{
+			// rpy * DEG_TO_RAD * 0.5
+			float cr = cos( (roll * (M_PI/180.0)) / 2 );
+			float sr = sin( (roll * (M_PI/180.0)) / 2 );
+			float cp = cos( (pitch * (M_PI/180.0)) / 2 );
+			float sp = sin( (pitch * (M_PI/180.0)) / 2 );
+			float cy = cos( (yaw * (M_PI/180.0)) / 2 );
+			float sy = sin( (yaw * (M_PI/180.0)) / 2 );
+
+			quat[0] = sr * cp * cy - cr * sp * sy;
+			quat[1] = cr * sp * cy + sr * cp * sy;
+			quat[2] = cr * cp * sy - sr * sp * cy;
+			quat[3] = cr * cp * cy + sr * sp * sy;
+		}
+#endif
+
+		time( &now );
+
+		_imuMsg.header.stamp.sec = (int32_t)now;
+#if RCCAR_IMUINF_ORIENTATION_TYPE == RCCAR_IMUINF_ORIENTATION_SUPPORT
+		_imuMsg.orientation.x = quat[0];
+		_imuMsg.orientation.y = quat[1];
+		_imuMsg.orientation.z = quat[2];
+		_imuMsg.orientation.w = quat[3];
+#endif
 		_imuMsg.linear_acceleration.x = accX;
 		_imuMsg.linear_acceleration.y = accY;
 		_imuMsg.linear_acceleration.z = accZ;

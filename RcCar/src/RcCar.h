@@ -4,10 +4,10 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2022/12/20
+ * @version     1.1.0
+ * @date        2023/03/22
  * 
- * @copyright   (C) 2022 Motoyuki Endo
+ * @copyright   (C) 2022-2023 Motoyuki Endo
  */
 #ifndef __RCCAR_H
 #define __RCCAR_H
@@ -16,6 +16,7 @@
 #include <M5Atom.h>
 #include <micro_ros_arduino.h>
 #include <stdio.h>
+#include <time.h>
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
@@ -39,6 +40,10 @@
 #define RCCAR_MAINCYCLE_MISEVTCNT				(200 / 10)						// 200ms
 
 #define RCCAR_IMUINF_SENDCYCLE					(100)							// 100ms
+
+#define RCCAR_IMUINF_ORIENTATION_NOTSUPPORT		1
+#define RCCAR_IMUINF_ORIENTATION_SUPPORT		2
+#define RCCAR_IMUINF_ORIENTATION_TYPE			RCCAR_IMUINF_ORIENTATION_NOTSUPPORT
 
 #define RCCAR_CMDVEL_COMFAILTIME				(1000 / 10)						// 1000ms
 #define RCCAR_JOYCTL_COMFAILTIME				(1000 / 10)						// 1000ms
