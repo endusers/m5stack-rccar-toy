@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.1.0
- * @date        2022/03/22
+ * @version     1.2.0
+ * @date        2023/04/10
  * 
  * @copyright   (C) 2022-2023 Motoyuki Endo
  */
@@ -265,7 +265,14 @@ void RcCar::RosInit( void )
 	);
 #endif
 #if ROS_AGENT_COMMODE == ROS_AGENT_COMMODE_SERIAL
-	set_microros_transports();
+	rmw_uros_set_custom_transport(
+		true,
+		NULL,
+		arduino_uart_transport_open,
+		arduino_uart_transport_close,
+		arduino_uart_transport_write,
+		arduino_uart_transport_read
+	);
 #endif
 }
 
