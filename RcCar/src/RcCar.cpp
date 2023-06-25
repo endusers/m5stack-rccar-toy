@@ -202,8 +202,8 @@ void RcCar::Init( void )
 
 	M5.IMU.Init();
 
-	// M5.IMU.SetGyroFsr( M5.IMU.GFS_500DPS ); 
-	// M5.IMU.SetAccelFsr( M5.IMU.AFS_4G );
+	M5.IMU.SetGyroFsr( M5.IMU.GFS_250DPS ); 
+	M5.IMU.SetAccelFsr( M5.IMU.AFS_2G );
 
 	_rccar.Init();
 
@@ -710,7 +710,14 @@ void RcCar::PublishImuInfo( void )
 	{
 		M5.IMU.getGyroData( &gyroX, &gyroY, &gyroZ );
 		M5.IMU.getAccelData( &accX, &accY, &accZ );
-		M5.IMU.getAhrsData( &pitch, &roll, &yaw );	// Madgwick Filter
+
+		gyroX = gyroX *  ( M_PI / 180.0 );	// DEG_TO_RAD
+		gyroY = gyroY *  ( M_PI / 180.0 );	// DEG_TO_RAD
+		gyroZ = gyroZ *  ( M_PI / 180.0 );	// DEG_TO_RAD
+
+		// Madgwick Filter : M5.IMU.getAhrsData( &pitch, &roll, &yaw );
+		MahonyAHRSupdateIMU(
+			gyroX, gyroY, gyroZ, accX, accY, accZ, &pitch, &roll, &yaw );
 
 #if RCCAR_IMUINF_ORIENTATION_TYPE == RCCAR_IMUINF_ORIENTATION_SUPPORT
 		{
@@ -741,9 +748,9 @@ void RcCar::PublishImuInfo( void )
 		_imuMsg.linear_acceleration.x = accX * 9.8;	// G_TO_M/S2
 		_imuMsg.linear_acceleration.y = accY * 9.8;	// G_TO_M/S2
 		_imuMsg.linear_acceleration.z = accZ * 9.8;	// G_TO_M/S2
-		_imuMsg.angular_velocity.x = gyroX *  ( M_PI / 180.0 );	// DEG_TO_RAD
-		_imuMsg.angular_velocity.y = gyroY *  ( M_PI / 180.0 );	// DEG_TO_RAD
-		_imuMsg.angular_velocity.z = gyroZ *  ( M_PI / 180.0 );	// DEG_TO_RAD
+		_imuMsg.angular_velocity.x = gyroX;
+		_imuMsg.angular_velocity.y = gyroY;
+		_imuMsg.angular_velocity.z = gyroZ;
 
 		ret = rcl_publish( &_pubImu, &_imuMsg, NULL );
 		RCLRETUNUSED( ret );
