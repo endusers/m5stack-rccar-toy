@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.2.0
- * @date        2023/04/10
+ * @version     1.2.1
+ * @date        2023/06/25
  * 
  * @copyright   (C) 2022-2023 Motoyuki Endo
  */
