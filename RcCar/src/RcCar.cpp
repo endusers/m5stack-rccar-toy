@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.2.0
- * @date        2023/04/10
+ * @version     1.2.1
+ * @date        2023/06/25
  * 
  * @copyright   (C) 2022-2023 Motoyuki Endo
  */
@@ -738,12 +738,12 @@ void RcCar::PublishImuInfo( void )
 		_imuMsg.orientation.z = quat[2];
 		_imuMsg.orientation.w = quat[3];
 #endif
-		_imuMsg.linear_acceleration.x = accX;
-		_imuMsg.linear_acceleration.y = accY;
-		_imuMsg.linear_acceleration.z = accZ;
-		_imuMsg.angular_velocity.x = gyroX;
-		_imuMsg.angular_velocity.y = gyroY;
-		_imuMsg.angular_velocity.z = gyroZ;
+		_imuMsg.linear_acceleration.x = accX * 9.8;	// G_TO_M/S2
+		_imuMsg.linear_acceleration.y = accY * 9.8;	// G_TO_M/S2
+		_imuMsg.linear_acceleration.z = accZ * 9.8;	// G_TO_M/S2
+		_imuMsg.angular_velocity.x = gyroX *  ( M_PI / 180.0 );	// DEG_TO_RAD
+		_imuMsg.angular_velocity.y = gyroY *  ( M_PI / 180.0 );	// DEG_TO_RAD
+		_imuMsg.angular_velocity.z = gyroZ *  ( M_PI / 180.0 );	// DEG_TO_RAD
 
 		ret = rcl_publish( &_pubImu, &_imuMsg, NULL );
 		RCLRETUNUSED( ret );
