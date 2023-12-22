@@ -4,10 +4,10 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.1.0
- * @date        2022/12/28
+ * @version     1.1.1
+ * @date        2023/06/25
  * 
- * @copyright   (C) 2022 Motoyuki Endo
+ * @copyright   (C) 2022-2023 Motoyuki Endo
  */
 #include "AckermannDrive.h"
 
@@ -209,7 +209,7 @@ float AckermannDrive::ConvertOmega2Degree( float i_speed, float i_omega )
 		angle =  atan( _wheelbase / radius );
 	}
 
-	degree = angle * ( 180 / M_PI );	// RAD_TO_DEG
+	degree = angle * ( 180.0 / M_PI );	// RAD_TO_DEG
 
 	return degree;
 }
