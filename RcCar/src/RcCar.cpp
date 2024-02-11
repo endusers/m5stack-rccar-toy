@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.3.0
- * @date        2024/01/05
+ * @version     1.3.1
+ * @date        2024/02/11
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -565,7 +565,7 @@ void RcCar::RosMgrCtrlCycle( void )
 #if ROS_AGENT_COMMODE == ROS_AGENT_COMMODE_SERIAL
 					_rosConState = ROS_CNST_WIFI_CONNECTED;
 #endif
-#if RC_JOYCONNECT_MODE == RCCAR_JOYCONNECT_PREFERBLUETOOTH
+#if RCCAR_JOYCONNECT_MODE == RCCAR_JOYCONNECT_PREFERBLUETOOTH
 				}
 #endif
 				break;
