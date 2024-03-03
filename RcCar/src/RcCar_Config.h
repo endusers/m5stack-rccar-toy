@@ -4,10 +4,10 @@
  * @brief       RcCar_Config
  * @note        なし
  * 
- * @version     1.1.0
- * @date        2022/12/28
+ * @version     1.2.0
+ * @date        2024/03/03
  * 
- * @copyright   (C) 2022 Motoyuki Endo
+ * @copyright   (C) 2022-2024 Motoyuki Endo
  */
 #ifndef __RCCAR_CONFIG_H
 #define __RCCAR_CONFIG_H
