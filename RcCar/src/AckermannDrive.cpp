@@ -4,10 +4,10 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.1.1
- * @date        2023/06/25
+ * @version     1.2.0
+ * @date        2024/03/03
  * 
- * @copyright   (C) 2022-2023 Motoyuki Endo
+ * @copyright   (C) 2022-2024 Motoyuki Endo
  */
 #include "AckermannDrive.h"
 
@@ -119,7 +119,7 @@ void AckermannDrive::SetSteering( float i_angle )
 		angle = (float)_maxAngle;
 	}
 
-	position = MAPF( angle, (float)_minAngle, (float)_maxAngle, 180.0, 0.0 );
+	position = MAPF( angle, (float)_minAngle, (float)_maxAngle, 0.0, 180.0 );
 
 	xSemaphoreTake( _mutex , portMAX_DELAY );
 	steering.SetAngle( (int32_t)position );
@@ -159,7 +159,7 @@ void AckermannDrive::SetSpeed( float i_speed )
 		rpm = (float)_maxRpm;
 	}
 
-	position = MAPF( rpm, (float)_minRpm, (float)_maxRpm, 180.0, 0.0 );
+	position = MAPF( rpm, (float)_minRpm, (float)_maxRpm, 0.0, 180.0 );
 
 	xSemaphoreTake( _mutex , portMAX_DELAY );
 	throttle.SetAngle( (int32_t)position );
@@ -177,7 +177,7 @@ void AckermannDrive::SetThrottle( float i_position )
 {
 	float position;
 
-	position = MAPF( i_position, -100.0, 100.0, 180.0, 0.0 );
+	position = MAPF( i_position, -100.0, 100.0, 0.0, 180.0 );
 
 	xSemaphoreTake( _mutex , portMAX_DELAY );
 	throttle.SetAngle( (int32_t)position );

@@ -4,10 +4,10 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.1.1
- * @date        2023/06/25
+ * @version     1.2.0
+ * @date        2024/03/03
  * 
- * @copyright   (C) 2022-2023 Motoyuki Endo
+ * @copyright   (C) 2022-2024 Motoyuki Endo
  */
 #ifndef __ACKERMANNDRIVE_H
 #define __ACKERMANNDRIVE_H
