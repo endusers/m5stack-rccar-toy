@@ -4,8 +4,8 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.2.0
- * @date        2024/03/03
+ * @version     1.3.0
+ * @date        2024/04/28
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -43,6 +43,10 @@ AckermannDrive::AckermannDrive( AckermannDriveConfig i_config )
 	_mutex = xSemaphoreCreateMutex();
 	xSemaphoreGive( _mutex );
 
+	sangle = 0.0;
+	tspeed = 0.0;
+	tposition = 0.0;
+
 	_config = i_config;
 
 	_minAngle = _config.steering.minAngle;
@@ -53,6 +57,8 @@ AckermannDrive::AckermannDrive( AckermannDriveConfig i_config )
 	_maxRpm = _config.throttle.maxRpm;
 	_forwardGain = _config.throttle.forwardGain;
 	_reverseGain = _config.throttle.reverseGain;
+	_minSteerMap = &_config.throttle.minMap.steer[0];
+	_minThrotMap = &_config.throttle.minMap.throt[0];
 }
 
 
@@ -107,19 +113,21 @@ void AckermannDrive::ControlCycle( void )
 void AckermannDrive::SetSteering( float i_angle )
 {
 	float position;
-	float angle;
 
-	angle = i_angle;
-	if( angle < _minAngle )
+	if( i_angle < _minAngle )
 	{
-		angle = (float)_minAngle;
+		sangle = (float)_minAngle;
 	}
-	if( angle > _maxAngle )
+	else if( i_angle > _maxAngle )
 	{
-		angle = (float)_maxAngle;
+		sangle = (float)_maxAngle;
+	}
+	else
+	{
+		sangle = i_angle;
 	}
 
-	position = MAPF( angle, (float)_minAngle, (float)_maxAngle, 0.0, 180.0 );
+	position = MAPF( sangle, (float)_minAngle, (float)_maxAngle, 0.0, 180.0 );
 
 	xSemaphoreTake( _mutex , portMAX_DELAY );
 	steering.SetAngle( (int32_t)position );
@@ -135,20 +143,23 @@ void AckermannDrive::SetSteering( float i_angle )
  */
 void AckermannDrive::SetSpeed( float i_speed )
 {
-	float speed;
 	float rpm;
 	float position;
+	float angle;
+	int32_t lhs;
+	int32_t rhs;
+	float min;
 
 	if( i_speed < 0.0 )
 	{
-		speed = i_speed * _reverseGain;
+		tspeed = i_speed * _reverseGain;
 	}
 	else
 	{
-		speed = i_speed * _forwardGain;
+		tspeed = i_speed * _forwardGain;
 	}
 
-	rpm = speed / ( 2 * M_PI * _radius ) * 60;
+	rpm = tspeed / ( 2 * M_PI * _radius ) * 60;
 
 	if( rpm < _minRpm )
 	{
@@ -161,8 +172,22 @@ void AckermannDrive::SetSpeed( float i_speed )
 
 	position = MAPF( rpm, (float)_minRpm, (float)_maxRpm, 0.0, 180.0 );
 
+	angle = abs(sangle);
+	lhs = (int32_t)( angle / ACKERMANNDRIVE_TMINMAP_STEP );
+	rhs = (int32_t)( ( (lhs + 1) >= ACKERMANNDRIVE_TMINMAP_SIZE ) ? lhs : lhs + 1 );
+	min = MAPF( angle, _minSteerMap[lhs], _minSteerMap[rhs], _minThrotMap[lhs], _minThrotMap[rhs] );
+
+	if( (position != 90.0) and (position > (90 - min)) and (position < (90 + min)) )
+	{
+		tposition = ( position < 90.0 ) ? (90 - min) : (90 + min);
+	}
+	else
+	{
+		tposition = position;
+	}
+
 	xSemaphoreTake( _mutex , portMAX_DELAY );
-	throttle.SetAngle( (int32_t)position );
+	throttle.SetAngle( (int32_t)tposition );
 	xSemaphoreGive( _mutex );
 }
 
@@ -175,12 +200,10 @@ void AckermannDrive::SetSpeed( float i_speed )
  */
 void AckermannDrive::SetThrottle( float i_position )
 {
-	float position;
-
-	position = MAPF( i_position, -100.0, 100.0, 0.0, 180.0 );
+	tposition = MAPF( i_position, -100.0, 100.0, 0.0, 180.0 );
 
 	xSemaphoreTake( _mutex , portMAX_DELAY );
-	throttle.SetAngle( (int32_t)position );
+	throttle.SetAngle( (int32_t)tposition );
 	xSemaphoreGive( _mutex );
 }
 

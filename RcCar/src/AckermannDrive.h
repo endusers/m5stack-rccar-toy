@@ -4,8 +4,8 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.2.0
- * @date        2024/03/03
+ * @version     1.3.0
+ * @date        2024/04/28
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -20,6 +20,8 @@
 //----------------------------------------------------------------
 //  <macro>
 //----------------------------------------------------------------
+#define ACKERMANNDRIVE_TMINMAP_STEP								(5)
+#define ACKERMANNDRIVE_TMINMAP_SIZE								(180 / ACKERMANNDRIVE_TMINMAP_STEP + 1)
 
 
 //----------------------------------------------------------------
@@ -46,6 +48,11 @@ struct ThrottleConfig_Tag
 	int32_t maxRpm;
 	float forwardGain;
 	float reverseGain;
+	struct
+	{
+		float steer[ACKERMANNDRIVE_TMINMAP_SIZE];
+		float throt[ACKERMANNDRIVE_TMINMAP_SIZE];
+	}minMap;
 	ServoConfig servo;
 };
 typedef struct ThrottleConfig_Tag					ThrottleConfig;
@@ -80,8 +87,13 @@ private:
 	int32_t _maxRpm;
 	float _forwardGain;
 	float _reverseGain;
+	float *_minSteerMap;
+	float *_minThrotMap;
 
 public:
+	float sangle;
+	float tspeed;
+	float tposition;
 	ServoCtrl steering;
 	ServoCtrl throttle;
 
