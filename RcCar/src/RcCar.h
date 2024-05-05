@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.3.1
- * @date        2024/02/11
+ * @version     1.4.0
+ * @date        2024/05/05
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -25,6 +25,7 @@
 #include <sensor_msgs/msg/imu.h>
 #include <sensor_msgs/msg/joy.h>
 #include <geometry_msgs/msg/twist.h>
+#include <std_msgs/msg/float32_multi_array.h>
 #include <rmw_microros/rmw_microros.h>
 #include "NvmConfig.h"
 #include "RcCar_Config.h"
@@ -41,10 +42,13 @@
 #define RCCAR_MAINCYCLE_MISEVTCNT				(200 / 10)						// 200ms
 
 #define RCCAR_IMUINF_SENDCYCLE					(100)							// 100ms
+#define RCCAR_SERVOINF_SENDCYCLE				(100)							// 100ms
 
 #define RCCAR_IMUINF_ORIENTATION_NOTSUPPORT		1
 #define RCCAR_IMUINF_ORIENTATION_SUPPORT		2
 #define RCCAR_IMUINF_ORIENTATION_TYPE			RCCAR_IMUINF_ORIENTATION_NOTSUPPORT
+
+#define RCCAR_SERVOMSG_CAPACITY					9
 
 #define RCCAR_CMDVEL_COMFAILTIME				(1000 / 10)						// 1000ms
 #define RCCAR_JOYCTL_COMFAILTIME				(1000 / 10)						// 1000ms
@@ -131,11 +135,13 @@ private:
 	rclc_executor_t _executor;
 	rcl_publisher_t _pubImu;
 	rcl_publisher_t _pubLog;
+	rcl_publisher_t _pubServo;
 	rcl_subscription_t _subJoy;
 	rcl_subscription_t _subTwist;
 
 	rcl_interfaces__msg__Log _logMsg;
 	sensor_msgs__msg__Imu _imuMsg;
+	std_msgs__msg__Float32MultiArray _servoMsg;
 	sensor_msgs__msg__Joy _joyMsg;
 	geometry_msgs__msg__Twist _twistMsg;
 
@@ -143,6 +149,7 @@ private:
 	uint32_t _rosAgentPingCnt;
 	uint32_t _rosMgrCtrlCycle;
 	uint32_t _imuInfPubCycle;
+	uint32_t _servoInfPubCycle;
 
 	void PublishImuInfo( void );                                        // IMUセンサ情報配信
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT

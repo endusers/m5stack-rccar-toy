@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.3.1
- * @date        2024/02/11
+ * @version     1.4.0
+ * @date        2024/05/05
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -149,6 +149,12 @@ RcCar::RcCar( void )
 	_logMsg.function.size = strlen(_logMsg.function.data);
 	_logMsg.line = (uint32_t)NULL;
 
+	_servoInfPubCycle = 0;
+	_servoMsg.data.capacity = RCCAR_SERVOMSG_CAPACITY;
+	_servoMsg.data.data = new float[_servoMsg.data.capacity];
+	_servoMsg.data.size = _servoMsg.data.capacity;
+	memset( &_servoMsg.data.data[0], 0, sizeof(_servoMsg.data.data) );
+
 	_joyMsg.axes.capacity = JOYSTICK_JOYMSG_AXES_CAPACITY;
 	_joyMsg.axes.data = new float[_joyMsg.axes.capacity];
 	_joyMsg.axes.size = _joyMsg.axes.capacity;
@@ -221,6 +227,7 @@ void RcCar::Init( void )
 	_rosAgentPingCnt = 0;
 	_rosMgrCtrlCycle = (uint32_t)millis();
 	_imuInfPubCycle = (uint32_t)millis();
+	_servoInfPubCycle = (uint32_t)millis();
 
 	M5.dis.setWidthHeight( 5, 5 );
 	M5.dis.displaybuff( (uint8_t *)&DISP_DISCONNECTED );
@@ -290,6 +297,7 @@ boolean RcCar::RosCreateEntities( void )
 	rcl_init_options_t init_ops;
 
 	_imuInfPubCycle = (uint32_t)millis();
+	_servoInfPubCycle = (uint32_t)millis();
 
 	_allocator = rcl_get_default_allocator();
 
@@ -317,6 +325,13 @@ boolean RcCar::RosCreateEntities( void )
 		&_node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT( sensor_msgs, msg, Imu ),
 		"rccar_imu" );
+	RCLRETCHECK( ret );
+
+	ret = rclc_publisher_init_best_effort(
+		&_pubServo,
+		&_node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT( std_msgs, msg, Float32MultiArray ),
+		"rccar_servo_info" );
 	RCLRETCHECK( ret );
 
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT
@@ -377,6 +392,8 @@ void RcCar::RosDestroyEntities( void )
 	ret = rcl_publisher_fini( &_pubLog, &_node );
 	RCLRETUNUSED( ret );
 	ret = rcl_publisher_fini( &_pubImu, &_node );
+	RCLRETUNUSED( ret );
+	ret = rcl_publisher_fini( &_pubServo, &_node );
 	RCLRETUNUSED( ret );
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT
 	ret = rcl_subscription_fini( &_subJoy, &_node );
@@ -756,6 +773,23 @@ void RcCar::PublishImuInfo( void )
 		RCLRETUNUSED( ret );
 
 		_imuInfPubCycle = getTime + RCCAR_IMUINF_SENDCYCLE;
+	}
+	if( getTime > _servoInfPubCycle )
+	{
+		_servoMsg.data.data[0] = _rccar.sangle;
+		_servoMsg.data.data[1] = _rccar.tspeed;
+		_servoMsg.data.data[2] = _rccar.tposition;
+		_servoMsg.data.data[3] = (float)_rccar.steering.reqAngle;
+		_servoMsg.data.data[4] = (float)_rccar.steering.targetAngle;
+		_servoMsg.data.data[5] = (float)_rccar.steering.outAngle;
+		_servoMsg.data.data[6] = (float)_rccar.throttle.reqAngle;
+		_servoMsg.data.data[7] = (float)_rccar.throttle.targetAngle;
+		_servoMsg.data.data[8] = (float)_rccar.throttle.outAngle;
+
+		ret = rcl_publish( &_pubServo, &_servoMsg, NULL );
+		RCLRETUNUSED( ret );
+
+		_servoInfPubCycle = getTime + RCCAR_SERVOINF_SENDCYCLE;
 	}
 }
 
