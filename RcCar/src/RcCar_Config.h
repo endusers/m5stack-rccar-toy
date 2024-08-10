@@ -4,8 +4,8 @@
  * @brief       RcCar_Config
  * @note        なし
  * 
- * @version     1.3.0
- * @date        2024/04/28
+ * @version     1.4.0
+ * @date        2024/04/10
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -20,6 +20,11 @@
 //  <macro>
 //----------------------------------------------------------------
 #define _SERIAL_DEBUG_
+
+#define RCCAR_UNIMOG							1
+#define RCCAR_BRONCO							2
+#define RCCAR_BRONCO_TRACKUINT					3
+#define RCCAR_TYPE								RCCAR_UNIMOG
 
 #define RCCAR_JOYCONNECT_PREFERBLUETOOTH		0
 #define RCCAR_JOYCONNECT_DUAL					1
