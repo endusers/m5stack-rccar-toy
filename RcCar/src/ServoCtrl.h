@@ -4,10 +4,10 @@
  * @brief       ServoCtrl
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2022/10/22
+ * @version     1.1.0
+ * @date        2024/03/03
  * 
- * @copyright   (C) 2022 Motoyuki Endo
+ * @copyright   (C) 2022-2024 Motoyuki Endo
  */
 #ifndef __SERVOCTRL_H
 #define __SERVOCTRL_H
@@ -37,6 +37,7 @@ struct ServoPort_Tag
 	int frequency;
 	int minWidth;
 	int maxWidth;
+	boolean isReverse;
 };
 typedef struct ServoPort_Tag					ServoPort;
 
@@ -70,6 +71,7 @@ private:
 	Servo _servo;
 	uint32_t _servoCtrlCycle;
 
+	boolean *_isReverse;
 	boolean *_isSmoothEnable;
 	float *_smtCoefficient;
 
