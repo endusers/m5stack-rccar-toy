@@ -4,8 +4,8 @@
  * @brief       RcCar_Config
  * @note        なし
  * 
- * @version     1.4.0
- * @date        2024/04/10
+ * @version     1.5.0
+ * @date        2024/09/15
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -25,8 +25,8 @@ const AckermannDriveConfig Config =
 //      servo
         {
             //  portConfig
-            //  | pinNo | hertz | minWidth | maxWidth | isReverse |
-                { 19 ,    50 ,    1000 ,     2000 ,     true      } ,
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                { 19 ,    50 ,    1000 ,     2000 ,     0 ,      true      } ,
             //  smoothConfig
             //  | isSmoothEnable | coefficient |
                 { false ,          0.2         } ,
@@ -46,8 +46,8 @@ const AckermannDriveConfig Config =
 //      servo
         {
             //  portConfig
-            //  | pinNo | hertz | minWidth | maxWidth | isReverse |
-                { 33 ,    50 ,    1000 ,     2000 ,     true      } ,
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                { 33 ,    50 ,    1000 ,     2000 ,     0 ,      true      } ,
             //  smoothConfig
             //  | isSmoothEnable | coefficient |
                 { false ,          0.2         } ,
@@ -62,8 +62,8 @@ const AckermannDriveConfig Config =
 //      servo
         {
             //  portConfig
-            //  | pinNo | hertz | minWidth | maxWidth | isReverse |
-                { 19 ,    50 ,    1000 ,     2000 ,     true      } ,
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                { 19 ,    50 ,    1000 ,     2000 ,     0 ,      true      } ,
             //  smoothConfig
             //  | isSmoothEnable | coefficient |
                 { false ,          0.2         } ,
@@ -84,8 +84,8 @@ const AckermannDriveConfig Config =
 //      servo
         {
             //  portConfig
-            //  | pinNo | hertz | minWidth | maxWidth | isReverse |
-                { 33 ,    50 ,    1000 ,     2000 ,     false     } ,
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                { 33 ,    50 ,    1000 ,     2000 ,     0 ,      false     } ,
             //  smoothConfig
             //  | isSmoothEnable | coefficient |
                 { false ,          0.2         } ,
@@ -100,8 +100,8 @@ const AckermannDriveConfig Config =
 //      servo
         {
             //  portConfig
-            //  | pinNo | hertz | minWidth | maxWidth | isReverse |
-                { 19 ,    50 ,    1000 ,     2000 ,     true      } ,
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                { 19 ,    50 ,    1000 ,     2000 ,     -20 ,    true      } ,
             //  smoothConfig
             //  | isSmoothEnable | coefficient |
                 { false ,          0.2         } ,
@@ -121,8 +121,8 @@ const AckermannDriveConfig Config =
 //      servo
         {
             //  portConfig
-            //  | pinNo | hertz | minWidth | maxWidth | isReverse |
-                { 33 ,    50 ,    1000 ,     2000 ,     false     } ,
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                { 33 ,    50 ,    1000 ,     2000 ,     0 ,      false     } ,
             //  smoothConfig
             //  | isSmoothEnable | coefficient |
                 { false ,          0.2         } ,

@@ -4,8 +4,8 @@
  * @brief       ServoCtrl
  * @note        なし
  * 
- * @version     1.1.0
- * @date        2024/03/03
+ * @version     1.2.0
+ * @date        2024/09/15
  * 
  * @copyright   (C) 2022-2024 Motoyuki Endo
  */
@@ -43,6 +43,7 @@ ServoCtrl::ServoCtrl( ServoConfig i_config )
 
 	port = i_config.portConfig;
 	smooth = i_config.smoothConfig;
+	_offset = &port.offset;
 	_isReverse = &port.isReverse;
 	_isSmoothEnable = &smooth.isSmoothEnable;
 	_smtCoefficient = &smooth.coefficient;
@@ -145,6 +146,11 @@ void ServoCtrl::WriteAngle( int32_t i_angle )
 	int32_t angle;
 
 	angle = i_angle;
+
+	if( *_offset != 0 )
+	{
+		angle = angle + *_offset;
+	}
 
 	if( *_isReverse )
 	{
