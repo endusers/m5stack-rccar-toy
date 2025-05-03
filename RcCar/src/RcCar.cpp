@@ -4,10 +4,10 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.4.0
- * @date        2024/05/05
+ * @version     1.5.0
+ * @date        2025/05/03
  * 
- * @copyright   (C) 2022-2024 Motoyuki Endo
+ * @copyright   (C) 2022-2025 Motoyuki Endo
  */
 #include "RcCar.h"
 
@@ -78,6 +78,12 @@ const LedDisBuf RcCar::DISP_ROSCONNECTED =
 		0x000000, 0x000000, 0x0000FF, 0x000000, 0x000000,
 	} ,
 };
+const String RcCar::DISP_MESS_DISCONNECTED = "DISCONNECTED";
+const String RcCar::DISP_MESS_BTCONNECTED = "BT CONNECTED";
+const String RcCar::DISP_MESS_ROSCONNECTED = "ROS CONNECTED";
+const int RcCar::DISP_MESS_COLOR_DISCONNECTED = 0xF800;         // static constexpr int TFT_RED         = 0xF800;      /* 255,   0,   0 */
+const int RcCar::DISP_MESS_COLOR_BTCONNECTED = 0x07E0;          // static constexpr int TFT_GREEN       = 0x07E0;      /*   0, 255,   0 */
+const int RcCar::DISP_MESS_COLOR_ROSCONNECTED = 0x001F;         // static constexpr int TFT_BLUE        = 0x001F;      /*   0,   0, 255 */
 
 
 //----------------------------------------------------------------
@@ -203,6 +209,7 @@ void RcCar::Init( void )
 	_rosCycleCnt = 0;
 #endif
 
+#if MODULE_TYPE == MODULE_TYPE_M5ATOM
 	M5.begin( true , true , true );
 	delay(50);
 
@@ -210,6 +217,12 @@ void RcCar::Init( void )
 
 	M5.IMU.SetGyroFsr( M5.IMU.GFS_250DPS ); 
 	M5.IMU.SetAccelFsr( M5.IMU.AFS_2G );
+#endif
+#if MODULE_TYPE == MODULE_TYPE_M5ATOMS3
+    auto cfg = M5.config();
+    M5.begin(cfg);
+	delay(50);
+#endif
 
 	_rccar.Init();
 
@@ -229,8 +242,17 @@ void RcCar::Init( void )
 	_imuInfPubCycle = (uint32_t)millis();
 	_servoInfPubCycle = (uint32_t)millis();
 
+#if MODULE_TYPE == MODULE_TYPE_M5ATOM
 	M5.dis.setWidthHeight( 5, 5 );
 	M5.dis.displaybuff( (uint8_t *)&DISP_DISCONNECTED );
+#endif
+#if MODULE_TYPE == MODULE_TYPE_M5ATOMS3
+	M5.Display.setTextDatum( middle_center );
+	M5.Display.setTextSize( 1.5 );
+	M5.Display.clear();
+	M5.Display.setTextColor( DISP_MESS_COLOR_DISCONNECTED );
+	M5.Display.drawString( DISP_MESS_DISCONNECTED, M5.Display.width() / 2, M5.Display.height() / 2 );
+#endif
 }
 
 
@@ -419,6 +441,8 @@ void RcCar::RosDestroyEntities( void )
 void RcCar::MainLoop( void )
 {
 	LedDisBuf *disp;
+	String disp_mess;
+	int disp_mess_color;
 	boolean isStop;
 #ifdef _SERIAL_DEBUG_
 	SerialDebug();
@@ -428,21 +452,34 @@ void RcCar::MainLoop( void )
 	{
 		_isLedUpdate = false;
 		disp = (LedDisBuf *)&DISP_DISCONNECTED;
+		disp_mess = DISP_MESS_DISCONNECTED;
+		disp_mess_color = DISP_MESS_COLOR_DISCONNECTED;
 		isStop = true;
 
 		if( _joy.isConnectedBt )
 		{
 			disp = (LedDisBuf *)&DISP_BTCONNECTED;
+			disp_mess = DISP_MESS_BTCONNECTED;
+			disp_mess_color = DISP_MESS_COLOR_BTCONNECTED;
 			isStop = false;
 		}
 
 		if( _rosConState == ROS_CNST_AGENT_CONNECTED )
 		{
 			disp = (LedDisBuf *)&DISP_ROSCONNECTED;
+			disp_mess = DISP_MESS_ROSCONNECTED;
+			disp_mess_color = DISP_MESS_COLOR_ROSCONNECTED;
 			isStop = false;
 		}
 
+#if MODULE_TYPE == MODULE_TYPE_M5ATOM
 		M5.dis.displaybuff( (uint8_t *)disp );
+#endif
+#if MODULE_TYPE == MODULE_TYPE_M5ATOMS3
+		M5.Display.clear();
+		M5.Display.setTextColor( disp_mess_color );
+		M5.Display.drawString( disp_mess, M5.Display.width() / 2, M5.Display.height() / 2 );
+#endif
 
 		if( isStop )
 		{
@@ -725,6 +762,7 @@ void RcCar::PublishImuInfo( void )
 
 	if( getTime > _imuInfPubCycle )
 	{
+#if MODULE_TYPE == MODULE_TYPE_M5ATOM
 		M5.IMU.getGyroData( &gyroX, &gyroY, &gyroZ );
 		M5.IMU.getAccelData( &accX, &accY, &accZ );
 
@@ -735,6 +773,29 @@ void RcCar::PublishImuInfo( void )
 		// Madgwick Filter : M5.IMU.getAhrsData( &pitch, &roll, &yaw );
 		MahonyAHRSupdateIMU(
 			gyroX, gyroY, gyroZ, accX, accY, accZ, &pitch, &roll, &yaw );
+#endif
+#if MODULE_TYPE == MODULE_TYPE_M5ATOMS3
+		(void)M5.Imu.update();
+
+		auto data = M5.Imu.getImuData();
+
+        accX = data.accel.x;
+        accY = data.accel.y;
+        accZ = data.accel.z;
+
+		gyroX = data.gyro.x *  ( M_PI / 180.0 );	// DEG_TO_RAD;
+        gyroY = data.gyro.y *  ( M_PI / 180.0 );	// DEG_TO_RAD;
+        gyroZ = data.gyro.z *  ( M_PI / 180.0 );	// DEG_TO_RAD;
+
+		// TODO : Magnetic 
+		data.mag.x;
+		data.mag.y;
+		data.mag.z;
+
+		// TODO : Madgwick Filter
+		// MahonyAHRSupdateIMU(
+		// 	gyroX, gyroY, gyroZ, accX, accY, accZ, &pitch, &roll, &yaw );
+#endif
 
 #if RCCAR_IMUINF_ORIENTATION_TYPE == RCCAR_IMUINF_ORIENTATION_SUPPORT
 		{

@@ -4,10 +4,10 @@
  * @brief       CustomTransport
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2023/04/10
+ * @version     1.1.0
+ * @date        2025/05/03
  * 
- * @copyright   (C) 2023 Motoyuki Endo
+ * @copyright   (C) 2023-2025 Motoyuki Endo
  */
 #include "CustomTransport.h"
 
@@ -23,10 +23,20 @@ extern "C"
     Serial.begin( 115200 );
 #endif
 #if ROS_TRANSPORT_SERIAL_SEL == ROS_TRANSPORT_SERIAL1
+#if MODULE_TYPE == MODULE_TYPE_M5ATOM
     Serial1.begin( 115200, SERIAL_8N1, 32, 26 );
 #endif
+#if MODULE_TYPE == MODULE_TYPE_M5ATOMS3
+    Serial1.begin( 115200, SERIAL_8N1, 1, 2 );
+#endif
+#endif
 #if ROS_TRANSPORT_SERIAL_SEL == ROS_TRANSPORT_SERIAL2
+#if MODULE_TYPE == MODULE_TYPE_M5ATOM
     Serial2.begin( 115200, SERIAL_8N1, 23, 33 );
+#endif
+#if MODULE_TYPE == MODULE_TYPE_M5ATOMS3
+    Serial2.begin( 115200, SERIAL_8N1, 7, 8 );
+#endif
 #endif
     return true;
   }

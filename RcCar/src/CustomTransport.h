@@ -4,15 +4,16 @@
  * @brief       CustomTransport
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2023/04/10
+ * @version     1.1.0
+ * @date        2025/05/03
  * 
- * @copyright   (C) 2023 Motoyuki Endo
+ * @copyright   (C) 2023-2025 Motoyuki Endo
  */
 #ifndef __CUSTOMTRANSPORT_H
 #define __CUSTOMTRANSPORT_H
 
 #include <Arduino.h>
+#include "Config.h"
 
 
 //----------------------------------------------------------------
