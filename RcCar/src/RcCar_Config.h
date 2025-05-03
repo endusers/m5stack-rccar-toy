@@ -4,10 +4,10 @@
  * @brief       RcCar_Config
  * @note        なし
  * 
- * @version     1.5.0
- * @date        2024/09/15
+ * @version     1.6.0
+ * @date        2025/05/03
  * 
- * @copyright   (C) 2022-2024 Motoyuki Endo
+ * @copyright   (C) 2022-2025 Motoyuki Endo
  */
 #ifndef __RCCAR_CONFIG_H
 #define __RCCAR_CONFIG_H
@@ -24,7 +24,8 @@
 #define RCCAR_UNIMOG							1
 #define RCCAR_BRONCO							2
 #define RCCAR_BRONCO_TRACKUINT					3
-#define RCCAR_TYPE								RCCAR_UNIMOG
+#define RCCAR_BRONCO_ATOMS3						4
+#define RCCAR_TYPE								RCCAR_BRONCO_ATOMS3
 
 #define RCCAR_JOYCONNECT_PREFERBLUETOOTH		0
 #define RCCAR_JOYCONNECT_DUAL					1

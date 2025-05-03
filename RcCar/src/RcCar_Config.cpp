@@ -4,10 +4,10 @@
  * @brief       RcCar_Config
  * @note        なし
  * 
- * @version     1.5.0
- * @date        2024/09/15
+ * @version     1.6.0
+ * @date        2025/05/03
  * 
- * @copyright   (C) 2022-2024 Motoyuki Endo
+ * @copyright   (C) 2022-2025 Motoyuki Endo
  */
 #include "RcCar_Config.h"
 
@@ -123,6 +123,43 @@ const AckermannDriveConfig Config =
             //  portConfig
             //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
                 { 33 ,    50 ,    1000 ,     2000 ,     0 ,      false     } ,
+            //  smoothConfig
+            //  | isSmoothEnable | coefficient |
+                { false ,          0.2         } ,
+        } ,
+    } ,
+#endif
+#if RCCAR_TYPE == RCCAR_BRONCO_ATOMS3
+//  steering
+    {
+//    | minAngle | maxAngle |
+        -35 ,      35 ,
+//      servo
+        {
+            //  portConfig
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                {  6 ,    50 ,    1000 ,     2000 ,     0 ,      false     } ,
+            //  smoothConfig
+            //  | isSmoothEnable | coefficient |
+                { false ,          0.2         } ,
+        } ,
+    } ,
+//  throttle
+    {
+//    | wheelbase | diameter | minRpm | maxRpm | forwardGain | reverseGain |
+        0.250 ,    0.095 ,     -520 ,   520 ,    1.0 ,         1.0 ,            // HOBBYWING XERUN 25.5T
+//      minMap
+        {
+            // steer
+            {  0.0,  5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0 },
+            // throt
+            { 14.0, 14.0, 14.0, 16.0, 17.0, 18.0, 19.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0 },
+        },
+//      servo
+        {
+            //  portConfig
+            //  | pinNo | hertz | minWidth | maxWidth | offset | isReverse |
+                {  8 ,    50 ,    1000 ,     2000 ,     0 ,      false     } ,
             //  smoothConfig
             //  | isSmoothEnable | coefficient |
                 { false ,          0.2         } ,
