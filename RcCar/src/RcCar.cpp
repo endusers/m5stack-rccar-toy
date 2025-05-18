@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.5.0
- * @date        2025/05/03
+ * @version     1.6.0
+ * @date        2025/05/18
  * 
  * @copyright   (C) 2022-2025 Motoyuki Endo
  */
@@ -174,6 +174,10 @@ RcCar::RcCar( void )
 	_twistMsg.angular.x = 0.0;
 	_twistMsg.angular.y = 0.0;
 	_twistMsg.angular.z = 0.0;
+
+	std::chrono::microseconds imup_micro = std::chrono::milliseconds( RCCAR_IMUINF_SENDCYCLE );
+	_imuFilter.begin( imup_micro.count() );
+	// _imuFilter.begin( RCCAR_IMUINF_SENDCYCLE * 1000 ); // MILLI_TO_MICRO
 }
 
 
@@ -792,9 +796,11 @@ void RcCar::PublishImuInfo( void )
 		data.mag.y;
 		data.mag.z;
 
-		// TODO : Madgwick Filter
-		// MahonyAHRSupdateIMU(
-		// 	gyroX, gyroY, gyroZ, accX, accY, accZ, &pitch, &roll, &yaw );
+		// Madgwick Filter
+		_imuFilter.updateIMU( gyroX, gyroY, gyroZ, accX, accY, accZ );
+		roll = _imuFilter.getRoll();
+		pitch = _imuFilter.getPitch();
+		yaw = _imuFilter.getYaw();
 #endif
 
 #if RCCAR_IMUINF_ORIENTATION_TYPE == RCCAR_IMUINF_ORIENTATION_SUPPORT

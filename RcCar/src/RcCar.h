@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.5.0
- * @date        2025/05/03
+ * @version     1.6.0
+ * @date        2025/05/18
  * 
  * @copyright   (C) 2022-2025 Motoyuki Endo
  */
@@ -16,6 +16,7 @@
 #include <micro_ros_arduino.h>
 #include <stdio.h>
 #include <time.h>
+#include <chrono>
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
@@ -26,6 +27,7 @@
 #include <geometry_msgs/msg/twist.h>
 #include <std_msgs/msg/float32_multi_array.h>
 #include <rmw_microros/rmw_microros.h>
+#include <MadgwickAHRS.h>
 #include "RcCar_Config.h"
 #include "JoyStick.h"
 #include "CustomTransport.h"
@@ -44,7 +46,7 @@
 
 #define RCCAR_IMUINF_ORIENTATION_NOTSUPPORT		1
 #define RCCAR_IMUINF_ORIENTATION_SUPPORT		2
-#define RCCAR_IMUINF_ORIENTATION_TYPE			RCCAR_IMUINF_ORIENTATION_NOTSUPPORT
+#define RCCAR_IMUINF_ORIENTATION_TYPE			RCCAR_IMUINF_ORIENTATION_SUPPORT
 
 #define RCCAR_SERVOMSG_CAPACITY					9
 
@@ -150,6 +152,8 @@ private:
 	uint32_t _rosMgrCtrlCycle;
 	uint32_t _imuInfPubCycle;
 	uint32_t _servoInfPubCycle;
+
+	Madgwick _imuFilter;
 
 	void PublishImuInfo( void );                                        // IMUセンサ情報配信
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT
