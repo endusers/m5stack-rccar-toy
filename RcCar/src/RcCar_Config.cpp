@@ -147,7 +147,7 @@ const AckermannDriveConfig Config =
 //  throttle
     {
 //    | wheelbase | diameter | minRpm | maxRpm | forwardGain | reverseGain |
-        0.250 ,    0.095 ,     -520 ,   520 ,    1.0 ,         1.0 ,            // HOBBYWING XERUN 25.5T
+        0.250 ,    0.11 ,      -460 ,   460 ,    1.0 ,         1.0 ,            // HOBBYWING XERUN 25.5T
 //      minMap
         {
             // steer
