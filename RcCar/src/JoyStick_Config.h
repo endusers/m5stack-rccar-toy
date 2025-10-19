@@ -4,10 +4,10 @@
  * @brief       JoyStick_Config
  * @note        なし
  * 
- * @version     2.0.0
- * @date        2022/08/20
+ * @version     2.1.0
+ * @date        2025/10/19
  * 
- * @copyright   (C) 2021-2022 Motoyuki Endo
+ * @copyright   (C) 2021-2025 Motoyuki Endo
  */
 #ifndef __JOYSTICK_CONFIG_H
 #define __JOYSTICK_CONFIG_H
@@ -15,9 +15,10 @@
 //----------------------------------------------------------------
 //  <macro>
 //----------------------------------------------------------------
-#define JOYSTICK_BLUETOOTH_SUPPORT				0
-#define JOYSTICK_BLUETOOTH_NOTSUPPORT			1
-#define JOYSTICK_BLUETOOTH_TYPE					JOYSTICK_BLUETOOTH_SUPPORT
+#define JOYSTICK_BLUETOOTH_CLASSIC_SUPPORT		0
+#define JOYSTICK_BLUETOOTH_BLE_SUPPORT			1
+#define JOYSTICK_BLUETOOTH_NOTSUPPORT			2
+#define JOYSTICK_BLUETOOTH_TYPE					JOYSTICK_BLUETOOTH_BLE_SUPPORT
 
 #define JOYSTICK_ROS1_SUPPORT					0
 #define JOYSTICK_ROS1_NOTSUPPORT				1

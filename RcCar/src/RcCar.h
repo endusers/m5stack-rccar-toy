@@ -4,19 +4,19 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.4.0
- * @date        2024/05/05
+ * @version     1.7.0
+ * @date        2025/10/19
  * 
- * @copyright   (C) 2022-2024 Motoyuki Endo
+ * @copyright   (C) 2022-2025 Motoyuki Endo
  */
 #ifndef __RCCAR_H
 #define __RCCAR_H
 
-#include <Arduino.h>
-#include <M5Atom.h>
+#include "System.h"
 #include <micro_ros_arduino.h>
 #include <stdio.h>
 #include <time.h>
+#include <chrono>
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
@@ -27,7 +27,7 @@
 #include <geometry_msgs/msg/twist.h>
 #include <std_msgs/msg/float32_multi_array.h>
 #include <rmw_microros/rmw_microros.h>
-#include "NvmConfig.h"
+#include <MadgwickAHRS.h>
 #include "RcCar_Config.h"
 #include "JoyStick.h"
 #include "CustomTransport.h"
@@ -46,7 +46,7 @@
 
 #define RCCAR_IMUINF_ORIENTATION_NOTSUPPORT		1
 #define RCCAR_IMUINF_ORIENTATION_SUPPORT		2
-#define RCCAR_IMUINF_ORIENTATION_TYPE			RCCAR_IMUINF_ORIENTATION_NOTSUPPORT
+#define RCCAR_IMUINF_ORIENTATION_TYPE			RCCAR_IMUINF_ORIENTATION_SUPPORT
 
 #define RCCAR_SERVOMSG_CAPACITY					9
 
@@ -58,10 +58,6 @@
 
 #define ROS_AGENT_PING_TIMEOUT					(50)							// 50ms
 #define ROS_AGENT_PING_RETRY_CNTMAX				(5)								// 5count(5 * RCCAR_ROSMGRCTRL_CYCLE ms)
-
-#define ROS_AGENT_COMMODE_SERIAL				1
-#define ROS_AGENT_COMMODE_UDP					2
-#define ROS_AGENT_COMMODE						ROS_AGENT_COMMODE_SERIAL
 
 
 //----------------------------------------------------------------
@@ -110,6 +106,12 @@ private:
 	static const LedDisBuf DISP_DISCONNECTED;
 	static const LedDisBuf DISP_BTCONNECTED;
 	static const LedDisBuf DISP_ROSCONNECTED;
+	static const String DISP_MESS_DISCONNECTED;
+	static const String DISP_MESS_BTCONNECTED;
+	static const String DISP_MESS_ROSCONNECTED;
+	static const int DISP_MESS_COLOR_DISCONNECTED;
+	static const int DISP_MESS_COLOR_BTCONNECTED;
+	static const int DISP_MESS_COLOR_ROSCONNECTED;
 
 	SemaphoreHandle_t _mutex;
 	SemaphoreHandle_t _mutex_joy;
@@ -151,6 +153,12 @@ private:
 	uint32_t _imuInfPubCycle;
 	uint32_t _servoInfPubCycle;
 
+	Madgwick _imuFilter;
+
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+	BLEManager ble;
+#endif
+
 	void PublishImuInfo( void );                                        // IMUセンサ情報配信
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT
 	static void SubscribeJoyCbkWrap( const void *arg, void *obj );      // Joy情報購読ハンドラ
@@ -181,7 +189,7 @@ public:
 	void RosDestroyEntities( void );                                    // Rosエンティティ破棄
 	void MainLoop( void );                                              // メインループ
 	void MainCycle( void );                                             // 制御周期ハンドラ
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE != JOYSTICK_BLUETOOTH_NOTSUPPORT
 	void BtJoyCtrlCycle( void );                                        // JoyStickコントロール周期
 #endif
 	void RosCtrlCycle( void );                                          // ROSコントロール周期

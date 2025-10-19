@@ -4,10 +4,10 @@
  * @brief       main
  * @note        なし
  * 
- * @version     1.0.0
- * @date        2022/10/22
+ * @version     1.1.0
+ * @date        2025/10/19
  * 
- * @copyright   (C) 2022 Motoyuki Endo
+ * @copyright   (C) 2022-2025 Motoyuki Endo
  */
 #include "RcCar.h"
 
@@ -99,7 +99,7 @@ void setup() {
 		APP_CPU_NUM
 	);
 
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE != JOYSTICK_BLUETOOTH_NOTSUPPORT
 	xTaskCreateUniversal(
 		BtCtrlTask,
 		"BtCtrlTask",
@@ -205,7 +205,7 @@ void ControlTask( void * pvParameters )
  * @param      なし
  * @retval     なし
  */
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE != JOYSTICK_BLUETOOTH_NOTSUPPORT
 void BtCtrlTask( void * pvParameters )
 {
 	for(;;)
