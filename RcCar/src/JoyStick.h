@@ -4,18 +4,22 @@
  * @brief       JoyStick
  * @note        なし
  * 
- * @version     2.1.0
- * @date        2022/12/20
+ * @version     2.2.0
+ * @date        2025/10/19
  * 
- * @copyright   (C) 2021-2022 Motoyuki Endo
+ * @copyright   (C) 2021-2025 Motoyuki Endo
  */
 #ifndef __JOYSTICK_H
 #define __JOYSTICK_H
 
 #include "JoyStick_Config.h"
 #include <Arduino.h>
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_CLASSIC_SUPPORT
 #include <PS4Controller.h>
+#endif
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+#include "BLEManager.h"
+#include "XboxController.h"
 #endif
 #if JOYSTICK_ROS1_TYPE == JOYSTICK_ROS1_SUPPORT
 #include <sensor_msgs/Joy.h>
@@ -120,12 +124,19 @@ public:
 	JoyInfo joyInfRos2;
 	JoyInfo beforeJoyInfRos2;
 
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+	XboxController xbox;
+#endif
+
 	JoyStick( void );                                                           // コンストラクタ
 	~JoyStick( void );                                                          // デストラクタ
 
 	void Init( void );                                                          // イニシャライズ
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_CLASSIC_SUPPORT
 	void UpdateJoyStickInfoBt( ps4_t *i_ps4 );                                  // JoyStickInfo更新
+#endif
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+	void UpdateJoyStickInfoBt( XboxController *i_xbox );                       	// JoyStickInfo更新
 #endif
 #if JOYSTICK_ROS1_TYPE == JOYSTICK_ROS1_SUPPORT
 	void UpdateJoyStickInfoRos1( sensor_msgs::Joy *i_msg );                     // JoyStickInfo更新

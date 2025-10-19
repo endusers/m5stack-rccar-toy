@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.6.0
- * @date        2025/05/18
+ * @version     1.7.0
+ * @date        2025/10/19
  * 
  * @copyright   (C) 2022-2025 Motoyuki Endo
  */
@@ -155,6 +155,10 @@ private:
 
 	Madgwick _imuFilter;
 
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+	BLEManager ble;
+#endif
+
 	void PublishImuInfo( void );                                        // IMUセンサ情報配信
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT
 	static void SubscribeJoyCbkWrap( const void *arg, void *obj );      // Joy情報購読ハンドラ
@@ -185,7 +189,7 @@ public:
 	void RosDestroyEntities( void );                                    // Rosエンティティ破棄
 	void MainLoop( void );                                              // メインループ
 	void MainCycle( void );                                             // 制御周期ハンドラ
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE != JOYSTICK_BLUETOOTH_NOTSUPPORT
 	void BtJoyCtrlCycle( void );                                        // JoyStickコントロール周期
 #endif
 	void RosCtrlCycle( void );                                          // ROSコントロール周期

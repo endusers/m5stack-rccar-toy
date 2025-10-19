@@ -4,10 +4,10 @@
  * @brief       JoyStick
  * @note        なし
  * 
- * @version     2.1.0
- * @date        2022/12/20
+ * @version     2.2.0
+ * @date        2025/10/19
  * 
- * @copyright   (C) 2021-2022 Smart Motoyuki Endo
+ * @copyright   (C) 2021-2025 Motoyuki Endo
  */
 #include "JoyStick.h"
 
@@ -89,7 +89,7 @@ JoyStick::~JoyStick( void )
  */
 void JoyStick::Init( void )
 {
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_CLASSIC_SUPPORT
 	// uint8_t derived_mac_addr[6];
 	// char bt_mac_addr[17 + 1];
 
@@ -103,16 +103,20 @@ void JoyStick::Init( void )
 
 	PS4.begin( BLUETOOTH_MAC_ADDRESS );
 #endif
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+	NimBLEAddress targetDeviceAddress( BLUETOOTH_MAC_ADDRESS, BLE_ADDR_PUBLIC );
+	xbox.setAddress( targetDeviceAddress );
+#endif
 }
 
 
 /**
  * @brief       JoyStickInfo更新
  * @note        なし
- * @param[in]   i_msg : Ps4コントローラ情報
+ * @param[in]   i_ps4 : Ps4コントローラ情報
  * @retval      なし
  */
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_CLASSIC_SUPPORT
 void JoyStick::UpdateJoyStickInfoBt( ps4_t *i_ps4 )
 {
 	beforeJoyInfBt = joyInfBt;
@@ -136,6 +140,40 @@ void JoyStick::UpdateJoyStickInfoBt( ps4_t *i_ps4 )
 
 	isBeforeConnectedBt = isConnectedBt;
 	isConnectedBt = PS4.isConnected();
+}
+#endif
+
+
+/**
+ * @brief       JoyStickInfo更新
+ * @note        なし
+ * @param[in]   i_xbox : Xboxコントローラ情報
+ * @retval      なし
+ */
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+void JoyStick::UpdateJoyStickInfoBt( XboxController *i_xbox )
+{
+	beforeJoyInfBt = joyInfBt;
+
+	joyInfBt.lStickH        = MAPF( i_xbox->data.axes[0], 0.0, 65535.0, -1.0, 1.0 );
+	joyInfBt.lStickV        = MAPF( (XBOXCONTROLLER_STICK_MAX - i_xbox->data.axes[1]), 0.0, 65535.0, -1.0, 1.0 );
+	joyInfBt.rStickH        = MAPF( i_xbox->data.axes[2], 0.0, 65535.0, -1.0, 1.0 );
+	joyInfBt.rStickV        = MAPF( (XBOXCONTROLLER_STICK_MAX - i_xbox->data.axes[3]), 0.0, 65535.0, -1.0, 1.0 );
+	joyInfBt.l2Axes         = MAPF( i_xbox->data.axes[4], 0.0, 1023.0, 0.0, 1.0 );
+	joyInfBt.r2Axes         = MAPF( i_xbox->data.axes[5], 0.0, 1023.0, 0.0, 1.0 );
+	joyInfBt.lrAxes         = 0;
+	joyInfBt.updownAxes     = 0;
+	joyInfBt.squareButton   = i_xbox->data.buttons[10];	// X
+	joyInfBt.crossButton    = i_xbox->data.buttons[8];	// A
+	joyInfBt.circleButton   = i_xbox->data.buttons[9];	// B
+	joyInfBt.triangleButton = i_xbox->data.buttons[11];	// Y
+	joyInfBt.l1Button       = i_xbox->data.buttons[12];
+	joyInfBt.r1Button       = i_xbox->data.buttons[13];
+	joyInfBt.battery        = i_xbox->battery;
+	joyInfBt.charging       = 0;
+
+	isBeforeConnectedBt = isConnectedBt;
+	isConnectedBt = i_xbox->isConnected();
 }
 #endif
 
@@ -167,8 +205,8 @@ void JoyStick::UpdateJoyStickInfoRos1( sensor_msgs::Joy *i_msg )
 	joyInfRos1.triangleButton = i_msg->buttons[3];
 	joyInfRos1.l1Button       = i_msg->buttons[4];
 	joyInfRos1.r1Button       = i_msg->buttons[5];
-	joyInfRos1.battery         = 0;
-	joyInfRos1.charging        = 0;
+	joyInfRos1.battery        = 0;
+	joyInfRos1.charging       = 0;
 #endif
 #if JOYSTICK_JOYMSGTYPE == JOYSTICK_JOYMSGTYPE_BLUEZ
 	// for bluez
@@ -186,8 +224,8 @@ void JoyStick::UpdateJoyStickInfoRos1( sensor_msgs::Joy *i_msg )
 	joyInfRos1.triangleButton = i_msg->buttons[2];
 	joyInfRos1.l1Button       = i_msg->buttons[4];
 	joyInfRos1.r1Button       = i_msg->buttons[5];
-	joyInfRos1.battery         = 0;
-	joyInfRos1.charging        = 0;
+	joyInfRos1.battery        = 0;
+	joyInfRos1.charging       = 0;
 #endif
 }
 #endif
@@ -220,8 +258,8 @@ void JoyStick::UpdateJoyStickInfoRos2( sensor_msgs__msg__Joy *i_msg )
 	joyInfRos2.triangleButton = i_msg->buttons.data[3];
 	joyInfRos2.l1Button       = i_msg->buttons.data[4];
 	joyInfRos2.r1Button       = i_msg->buttons.data[5];
-	joyInfRos2.battery         = 0;
-	joyInfRos2.charging        = 0;
+	joyInfRos2.battery        = 0;
+	joyInfRos2.charging       = 0;
 #endif
 #if JOYSTICK_JOYMSGTYPE == JOYSTICK_JOYMSGTYPE_BLUEZ
 	// for bluez
@@ -239,8 +277,8 @@ void JoyStick::UpdateJoyStickInfoRos2( sensor_msgs__msg__Joy *i_msg )
 	joyInfRos2.triangleButton = i_msg->buttons.data[2];
 	joyInfRos2.l1Button       = i_msg->buttons.data[4];
 	joyInfRos2.r1Button       = i_msg->buttons.data[5];
-	joyInfRos2.battery         = 0;
-	joyInfRos2.charging        = 0;
+	joyInfRos2.battery        = 0;
+	joyInfRos2.charging       = 0;
 #endif
 }
 #endif

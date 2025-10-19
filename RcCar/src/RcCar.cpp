@@ -4,8 +4,8 @@
  * @brief       RcCar
  * @note        なし
  * 
- * @version     1.6.0
- * @date        2025/05/18
+ * @version     1.7.0
+ * @date        2025/10/19
  * 
  * @copyright   (C) 2022-2025 Motoyuki Endo
  */
@@ -237,6 +237,11 @@ void RcCar::Init( void )
 
 	_joy.Init();
 	_JoyCtrlCycle = 0;
+
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+	ble.addDevice( &_joy.xbox );
+	ble.begin();
+#endif
 
 	_wifiRetryTime = (uint32_t)millis();
 
@@ -526,7 +531,7 @@ void RcCar::MainCycle( void )
  * @param       なし
  * @retval      なし
  */
-#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_SUPPORT
+#if JOYSTICK_BLUETOOTH_TYPE != JOYSTICK_BLUETOOTH_NOTSUPPORT
 void RcCar::BtJoyCtrlCycle( void )
 {
 	uint32_t getTime;
@@ -537,8 +542,17 @@ void RcCar::BtJoyCtrlCycle( void )
 	{
 		_JoyCtrlCycle = getTime + RCCAR_JOYCTRL_CYCLE;
 
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+		ble.update();
+#endif
+
 		xSemaphoreTake( _mutex_joy , portMAX_DELAY );
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_CLASSIC_SUPPORT
 		_joy.UpdateJoyStickInfoBt( &PS4.data );
+#endif
+#if JOYSTICK_BLUETOOTH_TYPE == JOYSTICK_BLUETOOTH_BLE_SUPPORT
+		_joy.UpdateJoyStickInfoBt( &_joy.xbox );
+#endif
 		if( _joy.isConnectedBt )
 		{
 			JoyControl( JOYSTKCONTYPE_BT );
@@ -969,6 +983,11 @@ void RcCar::JoyControl( JoyStickConnectType i_type )
 	{
 		joyInf = &_joy.joyInfBt;
 		beforeJoyInf = &_joy.beforeJoyInfBt;
+	}
+	else if( i_type == JOYSTKCONTYPE_ROS1 )
+	{
+		joyInf = &_joy.joyInfRos1;
+		beforeJoyInf = &_joy.beforeJoyInfRos1;
 	}
 	else
 	{
