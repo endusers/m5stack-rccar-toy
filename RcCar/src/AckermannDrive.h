@@ -4,16 +4,15 @@
  * @brief       AckermannDrive
  * @note        なし
  * 
- * @version     1.3.0
- * @date        2024/04/28
+ * @version     1.3.1
+ * @date        2024/05/03
  * 
- * @copyright   (C) 2022-2024 Motoyuki Endo
+ * @copyright   (C) 2022-2025 Motoyuki Endo
  */
 #ifndef __ACKERMANNDRIVE_H
 #define __ACKERMANNDRIVE_H
 
 #include <Arduino.h>
-#include <M5Atom.h>
 #include "ServoCtrl.h"
 
 
