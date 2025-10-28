@@ -115,6 +115,8 @@ RcCar::RcCar( void )
 	_failCmdVelCnt = 0;
 	_failJoyCtlCnt = 0;
 
+	_sensorUpdateCycle = 0;
+
 	_imuInfPubCycle = 0;
 	_imuMsg.header.stamp.sec = 0;
 	_imuMsg.header.stamp.nanosec = 0;
@@ -137,6 +139,16 @@ RcCar::RcCar( void )
 	_imuMsg.angular_velocity.x = 0.0;
 	_imuMsg.angular_velocity.y = 0.0;
 	_imuMsg.angular_velocity.z = 0.0;
+
+	_magMsg.header.stamp.sec = 0;
+	_magMsg.header.stamp.nanosec = 0;
+	_magMsg.header.frame_id.capacity = strlen("imu_link");
+	_magMsg.header.frame_id.data = (char *)"imu_link";
+	_magMsg.header.frame_id.size = strlen("imu_link");
+	_magMsg.magnetic_field.x = 0.0;
+	_magMsg.magnetic_field.y = 0.0;
+	_magMsg.magnetic_field.z = 0.0;
+	memset( &_magMsg.magnetic_field_covariance [0], 0, sizeof(_magMsg.magnetic_field_covariance ) );
 
 	_logMsg.stamp.sec = 0;
 	_logMsg.stamp.nanosec = 0;
@@ -175,9 +187,8 @@ RcCar::RcCar( void )
 	_twistMsg.angular.y = 0.0;
 	_twistMsg.angular.z = 0.0;
 
-	std::chrono::microseconds imup_micro = std::chrono::milliseconds( RCCAR_IMUINF_SENDCYCLE );
-	_imuFilter.begin( imup_micro.count() );
-	// _imuFilter.begin( RCCAR_IMUINF_SENDCYCLE * 1000 ); // MILLI_TO_MICRO
+	std::chrono::duration<float> imup_sec = std::chrono::milliseconds( RCCAR_SENSOR_UPDATECYCLE );
+	_imuFilter.begin( 1.0 / imup_sec.count() );
 }
 
 
@@ -223,8 +234,8 @@ void RcCar::Init( void )
 	M5.IMU.SetAccelFsr( M5.IMU.AFS_2G );
 #endif
 #if MODULE_TYPE == MODULE_TYPE_M5ATOMS3
-    auto cfg = M5.config();
-    M5.begin(cfg);
+	auto cfg = M5.config();
+	M5.begin(cfg);
 	delay(50);
 #endif
 
@@ -247,7 +258,9 @@ void RcCar::Init( void )
 
 	_rosConState = ROS_CNST_WIFI_DISCONNECTED;
 	_rosAgentPingCnt = 0;
+	_rosAgentTimeSyncCnt = 0;
 	_rosMgrCtrlCycle = (uint32_t)millis();
+	_sensorUpdateCycle = (uint32_t)millis();
 	_imuInfPubCycle = (uint32_t)millis();
 	_servoInfPubCycle = (uint32_t)millis();
 
@@ -344,7 +357,7 @@ boolean RcCar::RosCreateEntities( void )
 	ret = rclc_node_init_default( &_node, (const char *)RCCAR_NODE_NAME, "", &_support );
 	RCLRETCHECK( ret );
 
-	ret = rclc_publisher_init_best_effort(
+	ret = rclc_publisher_init_default(
 		&_pubLog,
 		&_node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT( rcl_interfaces, msg, Log ),
@@ -356,6 +369,13 @@ boolean RcCar::RosCreateEntities( void )
 		&_node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT( sensor_msgs, msg, Imu ),
 		"rccar_imu" );
+	RCLRETCHECK( ret );
+
+	ret = rclc_publisher_init_best_effort(
+		&_pubMag,
+		&_node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT( sensor_msgs, msg, MagneticField ),
+		"rccar_mag" );
 	RCLRETCHECK( ret );
 
 	ret = rclc_publisher_init_best_effort(
@@ -423,6 +443,8 @@ void RcCar::RosDestroyEntities( void )
 	ret = rcl_publisher_fini( &_pubLog, &_node );
 	RCLRETUNUSED( ret );
 	ret = rcl_publisher_fini( &_pubImu, &_node );
+	RCLRETUNUSED( ret );
+	ret = rcl_publisher_fini( &_pubMag, &_node );
 	RCLRETUNUSED( ret );
 	ret = rcl_publisher_fini( &_pubServo, &_node );
 	RCLRETUNUSED( ret );
@@ -585,10 +607,12 @@ void RcCar::BtJoyCtrlCycle( void )
  */
 void RcCar::RosCtrlCycle( void )
 {
+	UpdateSensorInfo();
+
 	xSemaphoreTake( _mutex_ros , portMAX_DELAY );
 	if( _rosConState == ROS_CNST_AGENT_CONNECTED  )
 	{
-		PublishImuInfo();
+		PublishSensorInfo();
 		rclc_executor_spin_some( &_executor, RCL_MS_TO_NS(10) );
 	}
 	xSemaphoreGive( _mutex_ros );
@@ -666,6 +690,7 @@ void RcCar::RosMgrCtrlCycle( void )
 				if( rmw_uros_ping_agent(ROS_AGENT_PING_TIMEOUT, 10) == RMW_RET_OK )
 				{
 					_rosAgentPingCnt = 0;
+					_rosAgentTimeSyncCnt = 0;
 					_rosConState = ROS_CNST_AGENT_AVAILABLE;
 				}
 				else{
@@ -690,11 +715,34 @@ void RcCar::RosMgrCtrlCycle( void )
 			case ROS_CNST_AGENT_AVAILABLE :
 				if( RosCreateEntities() )
 				{
-					_rosConState = ROS_CNST_AGENT_CONNECTED;
+					_rosConState = ROS_CNST_AGENT_TIMESYNC;
 				}
 				else
 				{
 					_rosConState = ROS_CNST_AGENT_DISCONNECTED;
+				}
+				break;
+			case ROS_CNST_AGENT_TIMESYNC :
+				if( rmw_uros_sync_session(ROS_AGENT_TIMESYNC_TIMEOUT) != RMW_RET_OK )
+				{
+					_rosAgentTimeSyncCnt++;
+					if( _rosAgentTimeSyncCnt >= ROS_AGENT_TIMESYNC_RETRY_CNTMAX )
+					{
+						_rosConState = ROS_CNST_AGENT_DISCONNECTED;
+					}
+				}
+				else
+				{
+					int64_t epoch_ns = rmw_uros_epoch_nanos();
+
+					timeval tv;
+					tv.tv_sec  = ( epoch_ns / 1000000000LL );
+					tv.tv_usec = ( epoch_ns % 1000000000LL ) / 1000;
+
+					(void)settimeofday( &tv, nullptr );
+
+					_rosConState = ROS_CNST_AGENT_CONNECTED;
+					_rosAgentTimeSyncCnt = 0;
 				}
 				break;
 			case ROS_CNST_AGENT_CONNECTED :
@@ -755,12 +803,12 @@ void RcCar::RosMgrCtrlCycle( void )
 
 
 /**
- * @brief       IMUセンサ情報配信
+ * @brief       センサ情報更新
  * @note        なし
  * @param       なし
  * @retval      なし
  */
-void RcCar::PublishImuInfo( void )
+void RcCar::UpdateSensorInfo( void )
 {
 	rcl_ret_t ret;
 	uint32_t getTime;
@@ -774,11 +822,13 @@ void RcCar::PublishImuInfo( void )
 	float roll;
 	float yaw;
 	float quat[4];
-	time_t now;
+	float magX;
+	float magY;
+	float magZ;
 
 	getTime = (uint32_t)millis();
 
-	if( getTime > _imuInfPubCycle )
+	if( getTime > _sensorUpdateCycle )
 	{
 #if MODULE_TYPE == MODULE_TYPE_M5ATOM
 		M5.IMU.getGyroData( &gyroX, &gyroY, &gyroZ );
@@ -787,6 +837,10 @@ void RcCar::PublishImuInfo( void )
 		gyroX = gyroX *  ( M_PI / 180.0 );	// DEG_TO_RAD
 		gyroY = gyroY *  ( M_PI / 180.0 );	// DEG_TO_RAD
 		gyroZ = gyroZ *  ( M_PI / 180.0 );	// DEG_TO_RAD
+
+		magX = 0.0;
+		magY = 0.0;
+		magZ = 0.0;
 
 		// Madgwick Filter : M5.IMU.getAhrsData( &pitch, &roll, &yaw );
 		MahonyAHRSupdateIMU(
@@ -797,18 +851,26 @@ void RcCar::PublishImuInfo( void )
 
 		auto data = M5.Imu.getImuData();
 
-        accX = data.accel.x;
-        accY = data.accel.y;
-        accZ = data.accel.z;
+		accX = data.accel.x;
+		accY = data.accel.y;
+		accZ = data.accel.z;
 
-		gyroX = data.gyro.x *  ( M_PI / 180.0 );	// DEG_TO_RAD;
-        gyroY = data.gyro.y *  ( M_PI / 180.0 );	// DEG_TO_RAD;
-        gyroZ = data.gyro.z *  ( M_PI / 180.0 );	// DEG_TO_RAD;
+		gyroX = data.gyro.x;
+		gyroY = data.gyro.y;
+		gyroZ = data.gyro.z;
 
-		// TODO : Magnetic 
-		data.mag.x;
-		data.mag.y;
-		data.mag.z;
+		if( M5.getBoard() == m5::board_t::board_M5AtomS3R )
+		{
+			magX = data.mag.x;
+			magY = data.mag.y;
+			magZ = data.mag.z;
+		}
+		else
+		{
+			magX = 0.0;
+			magY = 0.0;
+			magZ = 0.0;
+		}
 
 		// Madgwick Filter
 		_imuFilter.updateIMU( gyroX, gyroY, gyroZ, accX, accY, accZ );
@@ -834,9 +896,6 @@ void RcCar::PublishImuInfo( void )
 		}
 #endif
 
-		time( &now );
-
-		_imuMsg.header.stamp.sec = (int32_t)now;
 #if RCCAR_IMUINF_ORIENTATION_TYPE == RCCAR_IMUINF_ORIENTATION_SUPPORT
 		_imuMsg.orientation.x = quat[0];
 		_imuMsg.orientation.y = quat[1];
@@ -850,13 +909,12 @@ void RcCar::PublishImuInfo( void )
 		_imuMsg.angular_velocity.y = gyroY;
 		_imuMsg.angular_velocity.z = gyroZ;
 
-		ret = rcl_publish( &_pubImu, &_imuMsg, NULL );
-		RCLRETUNUSED( ret );
 
-		_imuInfPubCycle = getTime + RCCAR_IMUINF_SENDCYCLE;
-	}
-	if( getTime > _servoInfPubCycle )
-	{
+		_magMsg.magnetic_field.x = magX;
+		_magMsg.magnetic_field.y = magY;
+		_magMsg.magnetic_field.z = magZ;
+
+
 		_servoMsg.data.data[0] = _rccar.sangle;
 		_servoMsg.data.data[1] = _rccar.tspeed;
 		_servoMsg.data.data[2] = _rccar.tposition;
@@ -867,6 +925,46 @@ void RcCar::PublishImuInfo( void )
 		_servoMsg.data.data[7] = (float)_rccar.throttle.targetAngle;
 		_servoMsg.data.data[8] = (float)_rccar.throttle.outAngle;
 
+		_sensorUpdateCycle = getTime + RCCAR_SENSOR_UPDATECYCLE;
+	}
+}
+
+
+/**
+ * @brief       センサ情報配信
+ * @note        なし
+ * @param       なし
+ * @retval      なし
+ */
+void RcCar::PublishSensorInfo( void )
+{
+	rcl_ret_t ret;
+	uint32_t getTime;
+
+	getTime = (uint32_t)millis();
+
+	if( getTime > _imuInfPubCycle )
+	{
+		timespec ts;
+		(void)clock_gettime( CLOCK_REALTIME, &ts );
+
+		_imuMsg.header.stamp.sec = (int32_t)ts.tv_sec;
+		_imuMsg.header.stamp.nanosec = (uint32_t)ts.tv_nsec;
+
+		_magMsg.header.stamp.sec = (int32_t)ts.tv_sec;
+		_magMsg.header.stamp.nanosec = (uint32_t)ts.tv_nsec;
+
+		ret = rcl_publish( &_pubImu, &_imuMsg, NULL );
+		RCLRETUNUSED( ret );
+
+		ret = rcl_publish( &_pubMag, &_magMsg, NULL );
+		RCLRETUNUSED( ret );
+
+		_imuInfPubCycle = getTime + RCCAR_IMUINF_SENDCYCLE;
+	}
+
+	if( getTime > _servoInfPubCycle )
+	{
 		ret = rcl_publish( &_pubServo, &_servoMsg, NULL );
 		RCLRETUNUSED( ret );
 
@@ -1119,6 +1217,8 @@ void RcCar::SerialDebug( void )
 		// Serial.print(esp_get_free_heap_size());
 		// Serial.print(",");
 		// Serial.print(_rosAgentPingCnt);
+		// Serial.print(",");
+		// Serial.print(_rosAgentTimeSyncCnt);
 		// Serial.print(",");
 		// Serial.print(_rosConState);
 		// Serial.print(",");

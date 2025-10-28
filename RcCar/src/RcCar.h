@@ -23,6 +23,7 @@
 #include <rclc/executor.h>
 #include <rcl_interfaces/msg/log.h>
 #include <sensor_msgs/msg/imu.h>
+#include <sensor_msgs/msg/magnetic_field.h>
 #include <sensor_msgs/msg/joy.h>
 #include <geometry_msgs/msg/twist.h>
 #include <std_msgs/msg/float32_multi_array.h>
@@ -40,6 +41,8 @@
 #define RCCAR_JOYCTRL_CYCLE						(100)							// 100ms
 #define RCCAR_ROSMGRCTRL_CYCLE					(1000)							// 1000ms
 #define RCCAR_MAINCYCLE_MISEVTCNT				(200 / 10)						// 200ms
+
+#define RCCAR_SENSOR_UPDATECYCLE				(20)							// 20ms
 
 #define RCCAR_IMUINF_SENDCYCLE					(100)							// 100ms
 #define RCCAR_SERVOINF_SENDCYCLE				(100)							// 100ms
@@ -59,6 +62,9 @@
 #define ROS_AGENT_PING_TIMEOUT					(50)							// 50ms
 #define ROS_AGENT_PING_RETRY_CNTMAX				(5)								// 5count(5 * RCCAR_ROSMGRCTRL_CYCLE ms)
 
+#define ROS_AGENT_TIMESYNC_TIMEOUT				(500)							// 500ms
+#define ROS_AGENT_TIMESYNC_RETRY_CNTMAX			(3)								// 3count(3 * RCCAR_ROSMGRCTRL_CYCLE ms)
+
 
 //----------------------------------------------------------------
 //  <enum>
@@ -70,6 +76,7 @@ enum RosConnectionState_Tag
 	ROS_CNST_WIFI_CONNECTED					,
 	ROS_CNST_WAITING_AGENT					,
 	ROS_CNST_AGENT_AVAILABLE				,
+	ROS_CNST_AGENT_TIMESYNC					,
 	ROS_CNST_AGENT_CONNECTED				,
 	ROS_CNST_AGENT_DISCONNECTED				,
 };
@@ -136,6 +143,7 @@ private:
 	rcl_node_t _node;
 	rclc_executor_t _executor;
 	rcl_publisher_t _pubImu;
+	rcl_publisher_t _pubMag;
 	rcl_publisher_t _pubLog;
 	rcl_publisher_t _pubServo;
 	rcl_subscription_t _subJoy;
@@ -143,13 +151,16 @@ private:
 
 	rcl_interfaces__msg__Log _logMsg;
 	sensor_msgs__msg__Imu _imuMsg;
+	sensor_msgs__msg__MagneticField _magMsg;
 	std_msgs__msg__Float32MultiArray _servoMsg;
 	sensor_msgs__msg__Joy _joyMsg;
 	geometry_msgs__msg__Twist _twistMsg;
 
 	RosConnectionState _rosConState;
 	uint32_t _rosAgentPingCnt;
+	uint32_t _rosAgentTimeSyncCnt;
 	uint32_t _rosMgrCtrlCycle;
+	uint32_t _sensorUpdateCycle;
 	uint32_t _imuInfPubCycle;
 	uint32_t _servoInfPubCycle;
 
@@ -159,7 +170,8 @@ private:
 	BLEManager ble;
 #endif
 
-	void PublishImuInfo( void );                                        // IMUセンサ情報配信
+	void UpdateSensorInfo( void );                                      // センサ情報更新
+	void PublishSensorInfo( void );                                     // センサ情報配信
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT
 	static void SubscribeJoyCbkWrap( const void *arg, void *obj );      // Joy情報購読ハンドラ
 	void SubscribeJoyCbk( const void *msgin );                          // Joy情報購読
