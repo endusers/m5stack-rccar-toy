@@ -1093,8 +1093,10 @@ void RcCar::JoyControl( JoyStickConnectType i_type )
 		beforeJoyInf = &_joy.beforeJoyInfRos2;
 	}
 
-	angle= MAPF( joyInf->rStickH , -1.0, 1.0, minAngle, maxAngle );
-	throttle = MAPF( joyInf->lStickV, -1.0, 1.0, -100.0, 100.0 );
+	_joy.UpdateControlType( *joyInf );
+
+	angle= MAPF( _joy.GetSteering( *joyInf ), -1.0, 1.0, minAngle, maxAngle );
+	throttle = MAPF( _joy.GetThrottle( *joyInf ), -1.0, 1.0, -100.0, 100.0 );
 
 	xSemaphoreTake( _mutex , portMAX_DELAY );
 	_rccar.SetSteering( angle );

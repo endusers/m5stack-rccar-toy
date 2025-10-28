@@ -60,6 +60,13 @@ enum JoyStickDirection_Tag
 };
 typedef enum JoyStickDirection_Tag				JoyStickDirection;
 
+enum JoyStickControlType_Tag
+{
+	JOYSTKCTRLTYPE_TWOHAND			= 0	,
+	JOYSTKCTRLTYPE_ONEHAND				,
+};
+typedef enum JoyStickControlType_Tag			JoyStickControlType;
+
 
 //----------------------------------------------------------------
 //  <union>
@@ -117,6 +124,7 @@ private:
 public:
 	boolean isConnectedBt;
 	boolean isBeforeConnectedBt;
+	JoyStickControlType joyCtrlType;
 	JoyInfo joyInfBt;
 	JoyInfo beforeJoyInfBt;
 	JoyInfo joyInfRos1;
@@ -144,8 +152,12 @@ public:
 #if JOYSTICK_ROS2_TYPE == JOYSTICK_ROS2_SUPPORT
 	void UpdateJoyStickInfoRos2( sensor_msgs__msg__Joy *i_msg );                // JoyStickInfo更新
 #endif
+	void UpdateControlType( JoyInfo &i_joy );                                   // JoyStickControlType更新
+
 	float GetJoyStickTilt( float i_hStick , float i_vStick );                   // JoyStick傾き取得
 	JoyStickDirection GetJoyStickDirection( float i_hStick , float i_vStick );  // JoyStick方向取得
+	float GetSteering( JoyInfo &i_joy );                                        // ステアリング取得
+	float GetThrottle( JoyInfo &i_joy );                                        // スロットル取得
 };
 
 #endif

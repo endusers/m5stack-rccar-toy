@@ -60,6 +60,7 @@ JoyStick::JoyStick( void )
 {
 	isConnectedBt = false;
 	isBeforeConnectedBt = false;
+	joyCtrlType = JOYSTKCTRLTYPE_TWOHAND;
 	memset( &joyInfBt , 0 , sizeof(joyInfBt) );
 	memset( &beforeJoyInfBt , 0 , sizeof(beforeJoyInfBt) );
 	memset( &joyInfRos1 , 0 , sizeof(joyInfRos1) );
@@ -285,6 +286,32 @@ void JoyStick::UpdateJoyStickInfoRos2( sensor_msgs__msg__Joy *i_msg )
 
 
 /**
+ * @brief       JoyStickControlType更新
+ * @note        なし
+ * @param[in]   i_joy : JoyInfo
+ * @retval      なし
+ */
+void JoyStick::UpdateControlType( JoyInfo &i_joy )
+{
+	JoyStickControlType type;
+
+	type = joyCtrlType;
+
+	if( i_joy.l1Button and i_joy.r1Button and i_joy.triangleButton )
+	{
+		type = JOYSTKCTRLTYPE_TWOHAND;
+	}
+
+	if( i_joy.l1Button and i_joy.r1Button and i_joy.crossButton )
+	{
+		type = JOYSTKCTRLTYPE_ONEHAND;
+	}
+
+	joyCtrlType = type;
+}
+
+
+/**
  * @brief       JoyStick傾き取得
  * @note        なし
  * @param[in]   i_hStick : JoyStick水平位置
@@ -349,4 +376,60 @@ JoyStickDirection JoyStick::GetJoyStickDirection( float i_hStick , float i_vStic
 	}
 
 	return stickDir;
+}
+
+
+/**
+ * @brief       ステアリング取得
+ * @note        なし
+ * @param[in]   i_joy : JoyInfo
+ * @retval      ステアリングアングル
+ */
+float JoyStick::GetSteering( JoyInfo &i_joy )
+{
+	float angle;
+
+	angle= 0.0;
+
+	if( joyCtrlType == JOYSTKCTRLTYPE_ONEHAND )
+	{
+		if( i_joy.l2Axes >= 0.8 )
+		{
+			angle= i_joy.lStickH;
+		}
+	}
+	else
+	{
+			angle= i_joy.rStickH;
+	}
+
+	return angle;
+}
+
+
+/**
+ * @brief       スロットル取得
+ * @note        なし
+ * @param[in]   i_joy : JoyInfo
+ * @retval      スロットル
+ */
+float JoyStick::GetThrottle( JoyInfo &i_joy )
+{
+	float throttle;
+
+	throttle = 0.0;
+
+	if( joyCtrlType == JOYSTKCTRLTYPE_ONEHAND )
+	{
+		if( i_joy.l2Axes >= 0.8 )
+		{
+			throttle = i_joy.lStickV;
+		}
+	}
+	else
+	{
+		throttle = i_joy.lStickV;
+	}
+
+	return throttle;
 }
